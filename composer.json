@@ -1,0 +1,13 @@
+{
+    "name": "yii-ext/membership",
+    "description": "Basic membership component",
+    "homepage": "https://github.com/yii-ext/membership/",
+    "type": "yii-extension",
+    "authors": [
+        {
+            "name": "Dmitry Semenov",
+            "email": "disemx@gmail.com",
+            "homepage": "http://disem.org/"
+        }
+    ]
+}
