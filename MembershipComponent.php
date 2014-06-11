@@ -6,11 +6,14 @@
  * Time: 13:25
  */
 
-namespace membership;
+namespace yii_ext\membership;
 
-
-//use membership\models\BaseMembershipModel;
-use membership\models\enums\MembershipStatus;
+/**
+ * Class MembershipComponent
+ * @package membership
+ */
+use yii_ext\membership\models\enums\MembershipIntervalUnit;
+use yii_ext\membership\models\enums\MembershipStatus;
 
 /**
  * Class MembershipComponent
@@ -18,16 +21,52 @@ use membership\models\enums\MembershipStatus;
  */
 class MembershipComponent extends \CApplicationComponent
 {
-
+    /**
+     * @var
+     */
     public $internalClasses;
+
     /**
      * @var bool
      */
     public $isPaid = false;
+
     /**
      * @var null
      */
     private $userId = null;
+
+    /**
+     * @var null
+     */
+    public $freeCondition = null;
+
+    public $paidArray = array();
+
+    /**
+     * Initialization of classes from configuration to be used
+     * @return void
+     */
+    public function init()
+    {
+        foreach ($this->internalClasses as $className => $classPath) {
+            $this->$className = new $classPath;
+        }
+    }
+
+    /**
+     * Setting dynamic attributes (classes init)
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return void
+     */
+    public function __set($key, $value)
+    {
+        $this->$key = $value;
+    }
+
 
     /**
      * @return bool|null
@@ -52,50 +91,104 @@ class MembershipComponent extends \CApplicationComponent
      */
     public function isPaid($userId = null)
     {
-        if ($userId === null) {
-            if ($this->isPaid === false && $this->getUserId() !== false) {
-                $membershipModel = BaseMembershipModel::model()->userScope($this->getUserId())->find();
-                if (isset($membershipModel) && $membershipModel->getStatus() == MembershipStatus::ACTIVE) {
-                    $this->isPaid = true;
-                }
-            }
-            return $this->isPaid;
-        } else {
-            $membershipModel = BaseMembershipModel::model()->userScope($userId)->find();
-            if (isset($membershipModel) && $membershipModel->getStatus() == MembershipStatus::ACTIVE) {
+        if ($userId == null) {
+            $userId = $this->getUserId();
+        }
+        if (in_array($userId, array_keys($this->paidArray))) {
+            return (bool)$this->paidArray[$userId];
+        }
+
+        if (is_callable($this->freeCondition)) {
+            if (call_user_func($this->freeCondition, $userId) == true) {
+                $this->paidArray[$userId] = true;
                 return true;
             }
         }
+        $membershipStatus = $this->membershipStatus;
+        $membershipModel = $this->membershipModel;
+        if ($userId === null) {
+            if ($this->isPaid === false && $this->getUserId() !== false) {
+                $membershipModel = $membershipModel->model()->userScope($this->getUserId())->find();
+                if (isset($membershipModel) && $membershipModel->getStatus() == $membershipStatus::ACTIVE) {
+                    $this->paidArray[$userId] = true;
+                    $this->isPaid = true;
+                }
+            }
+            $this->paidArray[$userId] = (bool)$this->isPaid();
+            return $this->isPaid;
+        } else {
+            $membershipModel = $membershipModel::model()->userScope($userId)->find();
+            if (isset($membershipModel) && $membershipModel->getStatus() == $membershipStatus::ACTIVE) {
+                $this->paidArray[$userId] = true;
+                return true;
+            }
+        }
+        $this->paidArray[$userId] = false;
         return false;
     }
 
+
     /**
-     * @param $interval
+     * @param $planId
+     * @param $intervalLength
+     * @param $intervalUnit
+     * @param $userId
      *
-     * @internal param $membershipId
      * @return mixed
      */
-    public function prolongMembership($interval)
+    public function prolong($planId, $intervalLength, $intervalUnit, $userId = null)
     {
-        // TODO: Implement prolongMembership() method.
+        if ($userId == null) {
+            $userId = \Yii::app()->user->getId();
+        }
+        $model = $this->membershipModel;
+        $model = $model->findByAttributes(array('userId' => $userId));
+        if (!$model) {
+            $model = $this->membershipModel;
+            $model->userId = \Yii::app()->user->getId();
+            $model->startDate = date('Y-m-d H:i:s');
+            $model->endDate = date('Y-m-d H:i:s', strtotime("today + $intervalLength " . MembershipIntervalUnit::getLabel($intervalUnit)));
+        } else {
+            if (empty($model->endDate)) {
+                $model->endDate = date('Y-m-d H:i:s');
+            }
+            $model->endDate = date('Y-m-d H:i:s', strtotime($model->endDate . " + $intervalLength " . MembershipIntervalUnit::getLabel($intervalUnit)));
+        }
+        $model->planId = $planId;
+        $model->status = MembershipStatus::ACTIVE;
+        return $model->save();
     }
 
     /**
      *
-     * @internal param $membershipId
+     * @param $membershipId
      *
      * @return mixed
      */
-    public function voidMembership()
+    public function voidMembership($membershipId)
     {
-        // TODO: Implement voidMembership() method.
+        $model = $this->membershipModel;
+        $model->findByAttributes(array('id' => $membershipId));
+        $model->status = MembershipStatus::CANCELLED;
+        $model->save();
     }
 
     /**
+     * @param $userId
+     *
      * @return mixed
      */
-    public function getStatus()
+    public function getSubscriptionTitle($userId = null)
     {
-        // TODO: Implement getStatus() method.
+        if ($userId == null) {
+            $userId = \Yii::app()->user->getId();
+        }
+        $model = $this->membershipModel;
+        $model = $model->findByAttributes(array('userId' => $userId));
+        if (!$model) {
+            return 'Free';
+        } else {
+            return $model->plan->title;
+        }
     }
 }

@@ -6,7 +6,7 @@
  * Time: 12:59
  */
 
-namespace membership;
+namespace yii_ext\membership;
 
 
 /**
@@ -19,6 +19,16 @@ namespace membership;
  */
 interface MembershipInterface
 {
+    /**
+     * @static
+     *
+     * @param $userId
+     * @param $membershipPlanId
+     *
+     * @return mixed
+     */
+    public static function createSubscription($userId, $membershipPlanId);
+
     /**
      * @param $interval
      *

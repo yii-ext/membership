@@ -6,7 +6,7 @@
  * Time: 13:04
  */
 
-namespace membership\models\enums;
+namespace yii_ext\membership\models\enums;
 
 
 /**

@@ -6,11 +6,11 @@
  * Time: 12:57
  */
 
-namespace membership\models;
+namespace yii_ext\membership\models;
 
-use membership\MembershipInterface;
+use yii_ext\membership\MembershipInterface;
+use yii_ext\membership\models\enums\MembershipStatus;
 use CModel;
-use membership\models\enums\MembershipStatus;
 
 /**
  * Class BaseMembershipModel
@@ -39,23 +39,98 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
         return 'Membership';
     }
 
-    /**
-     * Returns the list of attribute names of the model.
-     * @return array list of attribute names.
-     */
-    public function attributeNames()
-    {
-        // TODO: Implement attributeNames() method.
-    }
 
+    /**
+     * @return array validation rules for model attributes.
+     */
+    public function rules()
+    {
+        // NOTE: you should only define rules for those attributes that
+        // will receive user inputs.
+        return array(
+            array('userId, planId, startDate', 'required'),
+            array('userId, planId, status', 'numerical', 'integerOnly' => true),
+            array('endDate', 'safe'),
+            // The following rule is used by search().
+            // @todo Please remove those attributes that should not be searched.
+            array('id, userId, planId, startDate, endDate, status', 'safe', 'on' => 'search'),
+        );
+    }
 
     /**
      * @return array relational rules.
      */
     public function relations()
     {
-        return array();
+        // NOTE: you may need to adjust the relation name and the related
+        // class name for the relations automatically generated below.
+        return array(
+            'plan' => array(self::HAS_ONE, 'MembershipPlanModel', array('id' => 'planId')),
+            'user' => array(self::HAS_ONE, 'UserModel', array('id' => 'userId')),
+        );
     }
+
+    /**
+     * @return array customized attribute labels (name=>label)
+     */
+    public function attributeLabels()
+    {
+        return array(
+            'id' => 'ID',
+            'userId' => 'User',
+            'planId' => 'Plan',
+            'startDate' => 'Start Date',
+            'endDate' => 'End Date',
+            'status' => 'Status',
+        );
+    }
+
+    /**
+     * Check User Subscription
+     * @author Igor Chepurnoy
+     *
+     * @param type $id
+     *
+     * @return boolean
+     */
+    public function checkActiveSubscription($id = null)
+    {
+        $criteria = new \CDbCriteria();
+        if ($id == null && $this->status == self::ACTIVE) {
+            $subscription = $this;
+        } elseif ($id !== null) {
+            $criteria->condition = 'userId =:userId AND status =:status';
+            $criteria->params = array(':userId' => $id,':status' => MembershipStatus::ACTIVE);
+            $subscription = self::model()->find($criteria);
+        }
+        if (!empty($subscription)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function scopes()
+    {
+        return array(
+            'active' => array(
+                'condition' => 'status = ' . MembershipStatus::ACTIVE . ''
+            ),
+            'upgradeToday' => array(
+                'condition' => 'DATE(startDate) = CURDATE() AND status = ' . MembershipStatus::ACTIVE . ''
+            ),
+            'upgradeThisWeek' => array(
+                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 7 DAY))  AND status = ' . MembershipStatus::ACTIVE . ''
+            ),
+            'upgradeThisMonth' => array(
+                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 1 MONTH))  AND status = ' . MembershipStatus::ACTIVE . ''
+            )
+        );
+    }
+
 
     /**
      * @scope
@@ -106,7 +181,7 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
         $membership = new self();
         $membership->userId = $userId;
         $membership->membershipPlanId = $membershipPlanId;
-        $membership->status = UserMembershipStatus::STATUS_ACTIVE;
+        $membership->status = MembershipStatus::ACTIVE;
         $membership->save();
         return $membership;
     }
@@ -119,7 +194,7 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
      */
     public function prolongMembership($interval)
     {
-        $this->status = MembershipStatus::STATUS_ACTIVE;
+        $this->status = MembershipStatus::ACTIVE;
         $this->endDate = new CDbExpression('DATE_ADD(NOW(), INTERVAL ' . $interval . ' DAY)');
         return $this->save();
     }
@@ -142,6 +217,43 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
             $this->voidMembership();
         }
         return $this->status;
+    }
+
+    /**
+     * @author Igor Chepurnoy
+     * @return type
+     */
+    public static function getCountUpgradeUserToday()
+    {
+        return self::model()->upgradeToday()->cache(3600, self::getMemberShipDependies())->count();
+    }
+
+    /**
+     * @author Igor Chepurnoy
+     * @return type
+     */
+    public static function getCountUpgradeUserThisWeek()
+    {
+        return self::model()->upgradeThisWeek()->cache(3600, self::getMemberShipDependies())->count();
+    }
+
+    /**
+     * @author Igor Chepurnoy
+     * @return type
+     */
+    public static function getCountUpgradeUserThisMonth()
+    {
+        return self::model()->upgradeThisMonth()->cache(3600, self::getMemberShipDependies())->count();
+    }
+
+    /**
+     * @author Igor Chepurnoy
+     * @return \CDbCacheDependency
+     */
+    public static function getMemberShipDependies()
+    {
+        return new \CDbCacheDependency('SELECT MAX(id) FROM ' . self::tableName() . '');
+
     }
 
 
