@@ -52,8 +52,6 @@ class MembershipComponent extends \CApplicationComponent
      */
     public function isPaid($userId = null)
     {
-        $t = new $this->internalClasses['membershipModelClass'];
-    var_dump($t);
         if ($userId === null) {
             if ($this->isPaid === false && $this->getUserId() !== false) {
                 $membershipModel = BaseMembershipModel::model()->userScope($this->getUserId())->find();
@@ -69,19 +67,6 @@ class MembershipComponent extends \CApplicationComponent
             }
         }
         return false;
-    }
-
-    /**
-     * @static
-     *
-     * @param $userId
-     * @param $membershipPlanId
-     *
-     * @return mixed
-     */
-    public function createSubscription($userId, $membershipPlanId)
-    {
-
     }
 
     /**

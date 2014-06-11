@@ -20,16 +20,6 @@ namespace membership;
 interface MembershipInterface
 {
     /**
-     * @static
-     *
-     * @param $userId
-     * @param $membershipPlanId
-     *
-     * @return mixed
-     */
-    public static function createSubscription($userId, $membershipPlanId);
-
-    /**
      * @param $interval
      *
      * @internal param $membershipId
