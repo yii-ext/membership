@@ -15,6 +15,15 @@ namespace yii_ext\membership\models;
 /**
  * Class BaseMembershipPlanModel
  * @package yii_ext\membership\models
+ * @property int id
+ * @property string title
+ * @property string description
+ * @property double price
+ * @property int intervalLength
+ * @property int intervalUnit
+ * @method BaseMembershipPlanModel|CActiveRecord find()
+ * @method BaseMembershipPlanModel|CActiveRecord findByPK()
+ * @method BaseMembershipPlanModel|CActiveRecord findByAttributes()
  */
 class BaseMembershipPlanModel extends \CActiveRecord
 {

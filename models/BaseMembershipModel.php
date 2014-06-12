@@ -15,6 +15,17 @@ use CModel;
 /**
  * Class BaseMembershipModel
  * @package models
+ * @property int id
+ * @property int userId
+ * @property int planId
+ * @property string startDate
+ * @property string endDate
+ * @property bool status
+ * @property MembershipPlanModel plan
+ * @property UserModel user
+ * @method BaseMembershipModel|CActiveRecord find()
+ * @method BaseMembershipModel|CActiveRecord findByPK()
+ * @method BaseMembershipModel|CActiveRecord findByAttributes()
  */
 class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
 {
