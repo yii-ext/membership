@@ -108,7 +108,7 @@ class MembershipComponent extends \CApplicationComponent
         $membershipModel = $this->membershipModel;
         if ($userId === null) {
             if ($this->isPaid === false && $this->getUserId() !== false) {
-                $membershipModel = $membershipModel->model()->userScope($this->getUserId())->find();
+                $membershipModel = self::getMembershipModel();
                 if (isset($membershipModel) && $membershipModel->getStatus() == $membershipStatus::ACTIVE) {
                     $this->paidArray[$userId] = true;
                     $this->isPaid = true;
@@ -127,6 +127,12 @@ class MembershipComponent extends \CApplicationComponent
         return false;
     }
 
+    public function getMembershipModel()
+    {
+        $membershipModel = $this->membershipModel;
+        $membershipModel->model()->userScope($this->getUserId())->find();
+        return $membershipModel;
+    }
 
     /**
      * @param $planId
