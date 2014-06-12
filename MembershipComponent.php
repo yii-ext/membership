@@ -30,18 +30,15 @@ class MembershipComponent extends \CApplicationComponent
      * @var bool
      */
     public $isPaid = false;
-
-    /**
-     * @var null
-     */
-    private $userId = null;
-
     /**
      * @var null
      */
     public $freeCondition = null;
-
     public $paidArray = array();
+    /**
+     * @var null
+     */
+    private $userId = null;
 
     /**
      * Initialization of classes from configuration to be used
@@ -65,23 +62,6 @@ class MembershipComponent extends \CApplicationComponent
     public function __set($key, $value)
     {
         $this->$key = $value;
-    }
-
-
-    /**
-     * @return bool|null
-     */
-    protected function getUserId()
-    {
-        if ($this->userId === null) {
-            $user = \Yii::app()->getComponent('user');
-            if ($user->isGuest()) {
-                $this->userId = false;
-            } else {
-                $this->userId = $user->getId();
-            }
-        }
-        return $this->userId;
     }
 
     /**
@@ -127,11 +107,36 @@ class MembershipComponent extends \CApplicationComponent
         return false;
     }
 
+    /**
+     * @return bool|null
+     */
+    protected function getUserId()
+    {
+        if ($this->userId === null) {
+            $user = \Yii::app()->getComponent('user');
+            if ($user->isGuest()) {
+                $this->userId = false;
+            } else {
+                $this->userId = $user->getId();
+            }
+        }
+        return $this->userId;
+    }
+
     public function getMembershipModel()
     {
-        $membershipModel = $this->membershipModel;
-        $membershipModel->model()->userScope($this->getUserId())->find();
-        return $membershipModel;
+        $model = $this->membershipModel;
+        $model = $model->findByAttributes(array('userId' => $this->getUserId()));
+        return $model;
+    }
+
+    public function isDemo()
+    {
+        $model = self::getMembershipModel();
+        if (isset($model) && $model->status = MembershipStatus::ACTIVE) {
+            return false;
+        }
+        return true;
     }
 
     /**
