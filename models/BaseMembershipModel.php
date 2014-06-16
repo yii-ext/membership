@@ -59,9 +59,11 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
         // NOTE: you should only define rules for those attributes that
         // will receive user inputs.
         return array(
-            array('userId, planId, startDate', 'required'),
-            array('userId, planId, status', 'numerical', 'integerOnly' => true),
+            array('userId, planId, startDate', 'required', 'except' => 'giveDemo'),
+            array('userId, planId, status', 'numerical', 'integerOnly' => true, 'allowEmpty' => true),
             array('endDate', 'safe'),
+            array('userId', 'unique'),
+            array('endDate', 'required', 'on' => 'giveDemo'),
             // The following rule is used by search().
             // @todo Please remove those attributes that should not be searched.
             array('id, userId, planId, startDate, endDate, status', 'safe', 'on' => 'search'),

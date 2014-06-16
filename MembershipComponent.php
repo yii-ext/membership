@@ -34,6 +34,9 @@ class MembershipComponent extends \CApplicationComponent
      * @var null
      */
     public $freeCondition = null;
+    /**
+     * @var array
+     */
     public $paidArray = array();
     /**
      * @var null
@@ -123,6 +126,9 @@ class MembershipComponent extends \CApplicationComponent
         return $this->userId;
     }
 
+    /**
+     * @return mixed
+     */
     public function getMembershipModel()
     {
         $model = $this->membershipModel;
@@ -130,6 +136,9 @@ class MembershipComponent extends \CApplicationComponent
         return $model;
     }
 
+    /**
+     * @return bool
+     */
     public function isDemo()
     {
         $model = self::getMembershipModel();
@@ -165,7 +174,27 @@ class MembershipComponent extends \CApplicationComponent
             }
             $model->endDate = date('Y-m-d H:i:s', strtotime($model->endDate . " + $intervalLength " . MembershipIntervalUnit::getLabel($intervalUnit)));
         }
+        if ($planId == null) {
+            $planId = new \CDbException("NULL");
+        }
         $model->planId = $planId;
+        $model->status = MembershipStatus::ACTIVE;
+        return $model->save();
+    }
+
+    /**
+     * @param $endDate
+     * @param $userId
+     *
+     * @return mixed
+     */
+    public function giveDemo($endDate, $userId)
+    {
+        $model = $this->membershipModel;
+        $model->scenario = 'giveDemo';
+        $model->userId = $userId;
+        $model->startDate = date('Y-m-d H:i:s');
+        $model->endDate = $endDate;
         $model->status = MembershipStatus::ACTIVE;
         return $model->save();
     }
