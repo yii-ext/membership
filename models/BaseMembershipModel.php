@@ -138,6 +138,15 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
             ),
             'upgradeThisMonth' => array(
                 'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 1 MONTH))  AND status = ' . MembershipStatus::ACTIVE . ''
+            ),
+            'expiringToday' => array(
+                'condition' => 'DATE(startDate) = CURDATE() AND status = ' . MembershipStatus::ACTIVE . ''
+            ),
+            'expiringThisWeek' => array(
+                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 7 DAY))  AND status = ' . MembershipStatus::ACTIVE . ''
+            ),
+            'expiringThisMonth' => array(
+                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 1 MONTH))  AND status = ' . MembershipStatus::ACTIVE . ''
             )
         );
     }
@@ -255,6 +264,14 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
     public static function getCountUpgradeUserThisMonth()
     {
         return self::model()->upgradeThisMonth()->cache(3600, self::getMemberShipDependies())->count();
+    }
+    /**
+     * @author Igor Chepurnoy
+     * @return type
+     */
+    public static function getCountExpiring()
+    {
+        return self::model()->expiringThisWeek()->cache(3600, self::getMemberShipDependies())->count();
     }
 
     /**
