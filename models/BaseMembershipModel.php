@@ -134,19 +134,19 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
                 'condition' => 'DATE(startDate) = CURDATE() AND status = ' . MembershipStatus::ACTIVE . ''
             ),
             'upgradeThisWeek' => array(
-                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 7 DAY))  AND status = ' . MembershipStatus::ACTIVE . ''
+                'condition' => 'YEARWEEK(startDate) = YEARWEEK(CURRENT_DATE)  AND status = ' . MembershipStatus::ACTIVE . ''
             ),
             'upgradeThisMonth' => array(
-                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 1 MONTH))  AND status = ' . MembershipStatus::ACTIVE . ''
+                'condition' => 'DATE_FORMAT(startDate, "%Y-%m") = DATE_FORMAT(CURDATE(), "%Y-%m")  AND status = ' . MembershipStatus::ACTIVE . ''
             ),
             'expiringToday' => array(
-                'condition' => 'DATE(startDate) = CURDATE() AND status = ' . MembershipStatus::ACTIVE . ''
+                'condition' => 'DATE(endDate) = CURDATE() AND status = ' . MembershipStatus::ACTIVE . ''
             ),
             'expiringThisWeek' => array(
-                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 7 DAY))  AND status = ' . MembershipStatus::ACTIVE . ''
+                'condition' => 'DATE(endDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 7 DAY))  AND status = ' . MembershipStatus::ACTIVE . ''
             ),
             'expiringThisMonth' => array(
-                'condition' => 'DATE(startDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 1 MONTH))  AND status = ' . MembershipStatus::ACTIVE . ''
+                'condition' => 'DATE(endDate) <= DATE(DATE_ADD(CURRENT_DATE,INTERVAL 1 MONTH))  AND status = ' . MembershipStatus::ACTIVE . ''
             )
         );
     }
@@ -269,7 +269,7 @@ class BaseMembershipModel extends \CActiveRecord implements MembershipInterface
      * @author Igor Chepurnoy
      * @return type
      */
-    public static function getCountExpiring()
+    public static function getCountExpiringThisWeek()
     {
         return self::model()->expiringThisWeek()->cache(3600, self::getMemberShipDependies())->count();
     }
