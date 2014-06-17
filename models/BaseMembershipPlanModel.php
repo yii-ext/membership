@@ -31,7 +31,7 @@ class BaseMembershipPlanModel extends \CActiveRecord
     /**
      * @var
      */
-    public $priceDiscounted;
+    public $discountedPrice;
 
     /**
      * Returns the static model of the specified AR class.
