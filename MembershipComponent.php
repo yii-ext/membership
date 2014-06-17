@@ -127,12 +127,17 @@ class MembershipComponent extends \CApplicationComponent
     }
 
     /**
+     * @param null $userId
+     *
      * @return mixed
      */
-    public function getMembershipModel()
+    public function getMembershipModel($userId = null)
     {
+        if($userId == null) {
+            $userId = $this->getUserId();
+        }
         $model = $this->membershipModel;
-        $model = $model->findByAttributes(array('userId' => $this->getUserId()));
+        $model = $model->findByAttributes(array('userId' => $userId));
         return $model;
     }
 
@@ -225,7 +230,7 @@ class MembershipComponent extends \CApplicationComponent
         }
         $model = $this->membershipModel;
         $model = $model->findByAttributes(array('userId' => $userId));
-        if (!$model) {
+        if (!$model || !$model->plan) {
             return 'Free';
         } else {
             return $model->plan->title;
